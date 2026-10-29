@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sprite Player</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--tx:#1d2330;--mut:#6b7385;--bd:#d9dde5;--ac:#3b6cf6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171f;--card:#1d222d;--tx:#e8eaf0;--mut:#8f97aa;--bd:#2d3444;--ac:#6c92ff}}
+:root[data-theme="dark"]{--bg:#14171f;--card:#1d222d;--tx:#e8eaf0;--mut:#8f97aa;--bd:#2d3444;--ac:#6c92ff}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:14px 16px 0}
+h1{font-size:18px;margin:0}
+p.sub{margin:2px 0 0;color:var(--mut);font-size:13px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;padding:14px 16px 24px;max-width:1200px;margin:auto}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin:0 0 8px}
+canvas{display:block;width:100%;image-rendering:pixelated;border-radius:6px;background:#2b3040}
+#sheet{background:repeating-conic-gradient(#8883 0 25%,transparent 0 50%) 0 0/16px 16px;width:auto;max-width:100%;margin-top:6px}
+label{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+label span.l{min-width:90px;color:var(--mut)}
+input[type=number],select{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:5px 7px;font:inherit;min-width:0}
+input[type=number]{width:70px}
+input[type=range]{flex:1;min-width:0}
+button{background:var(--ac);color:#fff;border:0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+button.alt{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+textarea{width:100%;height:280px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:8px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+#msg{font-size:12px;color:var(--mut);min-height:18px;margin-top:6px}
+.pad{display:flex;gap:8px;margin-top:8px;justify-content:center}
+.pad button{width:56px;height:46px;font-size:18px;background:var(--card);color:var(--tx);border:1px solid var(--bd);touch-action:none;user-select:none}
+.hint{font-size:12px;color:var(--mut);margin-top:6px}
+.side{display:flex;flex-direction:column;gap:14px}
+.bar{height:8px;background:var(--bd);border-radius:4px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ac);transition:width .25s}
+#steps{list-style:none;margin:8px 0 0;padding:0;font-size:13px;max-height:260px;overflow:auto}
+#steps li{padding:3px 0 3px 22px;position:relative;color:var(--mut)}
+#steps li::before{position:absolute;left:0;content:"⏳"}
+#steps li.ok{color:var(--tx)}
+#steps li.ok::before{content:"✓";color:#2fa84f}
+#steps li.warn{color:var(--tx)}
+#steps li.warn::before{content:"!";color:#d9a100;font-weight:700}
+#steps li.fail{color:#d94a4a}
+#steps li.fail::before{content:"✗";color:#d94a4a}
+#steps li.skip::before{content:"–"}
+#arcbtn{background:#ff3d8b;font-weight:700;letter-spacing:.05em}
+.stp{margin:14px 0 4px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.stp b{font-weight:600}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.acts button{flex:1;min-width:64px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);text-transform:uppercase;font-size:12px;letter-spacing:.04em}
+.acts button.has::after{content:" ✓";color:#2fa84f}
+.acts button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.acts.want button{animation:pulse 1s infinite}
+@keyframes pulse{50%{border-color:var(--ac);box-shadow:0 0 0 3px #3b6cf633}}
+#pimg{display:block;max-height:110px;max-width:100%;image-rendering:pixelated;margin:6px 0;border:1px dashed var(--bd);border-radius:6px;background:repeating-conic-gradient(#8883 0 25%,transparent 0 50%) 0 0/12px 12px}
+#pimg[hidden]{display:none}
+.dual{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+.dual .l{min-width:90px;color:var(--mut)}
+.dual b{min-width:96px;text-align:right;font-size:12px}
+.dr{position:relative;flex:1;height:24px}
+.dr .trk{position:absolute;left:0;right:0;top:50%;height:6px;margin-top:-3px;background:var(--bd);border-radius:3px}
+.dr .trk i{position:absolute;top:0;bottom:0;background:var(--ac);border-radius:3px}
+.dr input{position:absolute;left:0;top:0;width:100%;height:24px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.dr input::-webkit-slider-runnable-track{background:transparent;height:24px}
+.dr input::-moz-range-track{background:transparent}
+.dr input::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;appearance:none;width:18px;height:18px;margin-top:3px;border-radius:50%;background:var(--ac);border:2px solid #fff;box-shadow:0 0 0 1px var(--ac);cursor:pointer}
+.dr input::-moz-range-thumb{pointer-events:auto;width:14px;height:14px;border-radius:50%;background:var(--ac);border:2px solid #fff;cursor:pointer}
+.pad button.tx{font-size:11px;width:auto;min-width:56px;padding:0 8px}
+#stored{list-style:none;margin:4px 0 0;padding:0;font-size:13px}
+#stored:empty::before{content:"Nenhuma ação armazenada ainda.";color:var(--mut)}
+#stored li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0}
+#stored li button{padding:2px 8px;font-size:12px}
+.bxrow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0;font-size:13px}
+.bxrow[hidden]{display:none}
+.bxrow label{margin:0;gap:4px}
+.bxrow input[type=number]{width:64px}
+#stgprev{cursor:crosshair;touch-action:none}
+#stgprev{width:auto;max-width:100%;background:repeating-conic-gradient(#8883 0 25%,transparent 0 50%) 0 0/16px 16px}
+#stg{width:auto;max-width:100%;background:repeating-conic-gradient(#8883 0 25%,transparent 0 50%) 0 0/16px 16px}
+input[type=range]:disabled{opacity:.4}
+#arcade{position:fixed;inset:0;z-index:50;background:#05030c;display:flex;align-items:center;justify-content:center;font-family:"Press Start 2P",ui-monospace,monospace;color:#fff;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+#arcade[hidden]{display:none}
+#arcwrap{position:relative;width:min(100vw,calc(100vh*16/9));aspect-ratio:16/9;max-height:100vh}
+#arc{width:100%;height:100%;display:block;background:#000;border-radius:0}
+.hud{position:absolute;top:2%;left:2%;right:2%;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:clamp(8px,1.6vw,16px);text-shadow:2px 2px 0 #000}
+.hud b{color:#ffd04f;font-weight:400}
+.hp{display:flex;align-items:center;gap:6px;flex:1;max-width:32%}
+.hp.r{flex-direction:row}
+.hpb{position:relative;display:block;flex:1;height:14px;border:2px solid #fff;background:#2a0a14}
+.hpb u{position:absolute;left:0;top:0;bottom:0;width:100%;background:linear-gradient(#ffe36a,#ff7a2f);transition:width .15s}
+.hp.r .hpb u{left:auto;right:0}
+.hud2 button{background:#0008;border:2px solid #fff6;color:#fff;border-radius:0;padding:4px 8px;font:inherit}
+.blink{color:#4ff0ff;animation:bl 1s steps(2) infinite}
+@keyframes bl{50%{opacity:.2}}
+.hud button{background:#0008;border:2px solid #fff6;color:#fff;border-radius:0;padding:4px 8px;font:inherit}
+.hud2{position:absolute;top:10%;left:2%;right:2%;display:flex;justify-content:space-between;font-size:clamp(7px,1.2vw,12px);color:#ff7ac8;text-shadow:2px 2px 0 #000}
+.ahint{position:absolute;bottom:2%;left:0;right:0;text-align:center;font-size:clamp(6px,1vw,11px);color:#fffa;text-shadow:1px 1px 0 #000}
+.apad{position:absolute;bottom:7%;left:2%;right:2%;margin:0;justify-content:flex-start}
+.apad button{opacity:.8}
+.apad button:nth-child(3){margin-left:auto}
+.crt{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 2px,transparent 2px 4px),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55))}
+</style>
+</head>
+<body>
+<header>
+  <h1>Sprite Player</h1>
+  <p class="sub">Envie o spritesheet, ajuste o JSON e jogue com o personagem.</p>
+</header>
+<main>
+  <section class="side">
+    <div class="card">
+      <h2>1. Preview jogável</h2>
+      <canvas id="game" width="800" height="360"></canvas>
+      <div class="bar"><i id="bar"></i></div>
+      <div id="makestat" class="hint">Armazene as ações (idle, walk, jump, attack, kick). No final, gere o personagem.</div>
+      <div class="pad">
+        <button data-k="ArrowLeft">◀</button>
+        <button data-k="ArrowRight">▶</button>
+        <button data-k="Space">⤒</button>
+        <button class="tx" data-k="KeyJ">SOCO</button><button class="tx" data-k="KeyK">CHUTE</button>
+      </div>
+      <p class="hint">Teclado: ←/→ ou A/D andam · Espaço, ↑ ou W pulam · J/Z ou clique esquerdo = soco · K/X ou clique direito = chute</p>
+    </div>
+    <div class="card">
+      <h2>Spritesheet montado (uma linha por ação)</h2>
+      <div class="stp">Ações armazenadas</div>
+      <ul id="stored"></ul>
+      <div id="stage" hidden>
+        <div class="stp" id="stgttl"></div>
+        <div class="stp">Trechos da animação (cada um pode ter um tamanho de frame diferente)</div>
+        <div class="acts" id="segtabs"></div>
+        <div class="row" style="margin-top:6px"><button class="alt" id="segdel" hidden>Remover este trecho</button></div>
+        <input type="file" id="segfile" accept="image/*" hidden>
+        <canvas id="stg"></canvas>
+        <div class="stp">Prévia da animação</div>
+        <canvas id="stgprev"></canvas>
+        <div class="hint" style="margin-top:4px">Arraste sobre a prévia para desenhar a caixa. As linhas tracejadas brancas são o centro e a linha dos pés.</div>
+        <div class="stp">Hitbox</div>
+        <div class="acts" id="bmode"><button id="bmhurt" data-m="hurt" class="on">Corpo (hurtbox)</button><button id="bmatk" data-m="atk" hidden>Ataque (attackBox)</button></div>
+        <div class="acts" id="bsel"></div>
+        <div class="bxrow"><label>x <input type="number" id="bx"></label><label>y <input type="number" id="by"></label><label>larg. <input type="number" id="bw" min="1"></label><label>alt. <input type="number" id="bh" min="1"></label></div>
+        <div class="bxrow" id="bfr" hidden><label>Frames ativos do ataque: de <input type="number" id="bf0" min="1"></label><label>a <input type="number" id="bf1" min="1"></label></div>
+        <div class="row" style="margin-top:0"><button class="alt" id="bauto">Auto</button><button class="alt" id="bclear">Limpar</button></div>
+        <div class="hint">De 1 a 4 caixas de corpo e, no attack e no kick, de 1 a 4 caixas de ataque. Cada caixa de ataque tem os próprios frames ativos e acerta uma vez por golpe. Medidas em pixels do sprite, a partir dos pés: x = 0 é o centro e y negativo é para cima. “Auto” mede o desenho e volta a uma caixa só.</div>
+        <div class="dual"><span class="l">Frames</span>
+          <div class="dr"><div class="trk"><i id="drfill"></i></div><input type="range" id="fa" min="1" max="1" value="1" aria-label="Primeiro frame"><input type="range" id="fb" min="1" max="1" value="1" aria-label="Último frame"></div>
+          <b id="fcv">1 a 1</b></div>
+        <label><span class="l">FPS</span><input type="range" id="fps2" min="2" max="10" step="1" value="6"><b id="fps2v">6</b></label>
+        <div class="row"><button id="store">Armazenar</button><button class="alt" id="cancel">Cancelar</button></div>
+        <div class="hint" id="stghint"></div>
+      </div>
+      <canvas id="sheet" width="10" height="10" style="display:none"></canvas>
+    </div>
+  </section>
+
+  <section class="side">
+    <div class="card">
+      <h2>2. Teste manual</h2>
+      <div class="stp"><b>Carregar personagem pronto (.zip)</b></div>
+      <input type="file" id="zipfile" accept=".zip,application/zip">
+      <div class="hint">Use um .zip salvo por este sistema (spritesheet.png + character.json). Ele substitui o que está armazenado e monta o personagem.</div>
+      <div class="stp"><b>Passo 1 · Imagem</b></div>
+      <input type="file" id="file" accept="image/*">
+      <img id="pimg" alt="" hidden>
+      <label><span class="l">Frame L × A</span><input type="number" id="fw" value="64" min="1"> × <input type="number" id="fh" value="64" min="1"></label>
+      <div class="hint">Ou arraste o arquivo para a página. O tamanho do frame é detectado sozinho; ajuste se precisar.</div>
+
+      <div class="stp"><b>Passo 2 · Ação desta imagem</b></div>
+      <div class="acts" id="acts"><button data-a="idle">idle</button><button data-a="walk">walk</button><button data-a="jump">jump</button><button data-a="attack">attack</button><button data-a="kick">kick</button></div>
+      <div class="hint">Clique na ação a que a imagem pertence (attack = soco, no clique esquerdo do mouse; kick = chute, no clique direito). Ajuste os frames e o FPS no card “Spritesheet montado” e clique em Armazenar: a tela é limpa para você enviar a próxima imagem. Só no final (passo 4) você testa o modelo, gera o personagem e cria o JSON.</div>
+
+      <div class="stp"><b>Passo 3 · Ajustes da ação selecionada</b></div>
+      <label><span class="l">FPS (2 a 10)</span><input type="range" id="fps" min="2" max="10" step="1" value="6" disabled><b id="fpsv">6</b></label>
+      <label><span class="l">Escala</span><input type="range" id="scale" min="1" max="8" step="0.5" value="2"><b id="scalev">2</b></label>
+      <label><input type="checkbox" id="flip"> Sprite desenhado olhando para a esquerda</label>
+      <label><input type="checkbox" id="manual" checked> Prévia: repetir só a ação selecionada (desmarque para jogar)</label>
+      <label><input type="checkbox" id="showbox" checked> Mostrar hitboxes no preview e no cenário (tecla H)</label>
+
+      <div class="stp"><b>Passo 4 · No final: testar, gerar e criar o JSON</b></div>
+      <div class="row" style="margin-top:0"><button id="arcbtn">TESTAR MODELO</button><button id="make">▶ Gerar personagem jogável</button><button class="alt" id="gen">Gerar JSON da grade</button><button class="alt" id="savechar">⬇ Salvar personagem</button></div>
+      <div class="hint">Salvar personagem baixa um .zip com <code>spritesheet.png</code> (uma linha por ação, pés alinhados) e <code>character.json</code> (frames, fps, loop e hitboxes), prontos para usar em outro jogo.</div>
+      <div id="msg"></div>
+      <ul id="steps"></ul>
+    </div>
+
+    <div class="card">
+      <h2>3. JSON</h2>
+      <textarea id="json" spellcheck="false" placeholder="O JSON é criado quando você clicar em Gerar JSON da grade, depois de armazenar as ações."></textarea>
+      <div class="row"><button id="apply">Aplicar JSON</button><button class="alt" id="copy">Copiar JSON</button></div>
+      <p class="hint">Cada ação tem <code>fps</code>, <code>loop</code> e uma lista de <code>segments</code> (trechos). Cada trecho tem a própria <code>image</code>, o tamanho do frame (<code>frameWidth</code> e <code>frameHeight</code>), <code>start</code> (primeiro frame usado; 0 = primeiro da imagem), <code>count</code> e <code>footOffset</code> (linhas transparentes abaixo dos pés). <code>hurtboxes</code> (1 a 4) e <code>attackBoxes</code> (1 a 4, no attack e no kick) são retângulos <code>{x, y, w, h}</code> em pixels do sprite, a partir dos pés (x = 0 é o centro; y negativo é para cima). Cada attackBox tem <code>activeFrames</code>: os frames da animação inteira (0 = primeiro) em que ela causa dano. Edite e clique em Aplicar para testar.</p>
+    </div>
+  </section>
+</main>
+
+<div id="arcade" hidden>
+  <div id="arcwrap">
+    <canvas id="arc" width="960" height="540"></canvas>
+    <div class="hud"><div class="hp"><span>P1</span><i class="hpb"><u id="hp1"></u></i></div><span class="blink">TESTANDO MODELO</span><div class="hp r"><i class="hpb"><u id="hp2"></u></i><span>CPU</span></div><button id="aclose" title="Sair (Esc)">✕</button></div>
+    <div class="hud2"><span id="aan"></span><button id="amode">OPONENTE: LUTA (T)</button></div>
+    <div class="pad apad"><button data-k="ArrowLeft">◀</button><button data-k="ArrowRight">▶</button><button data-k="Space">⤒</button><button class="tx" data-k="KeyJ">SOCO</button><button class="tx" data-k="KeyK">CHUTE</button></div>
+    <div class="ahint">← → MOVER · ESPAÇO PULAR · CLIQUE ESQ./J SOCO · CLIQUE DIR./K CHUTE · T OPONENTE · R REINICIAR · H HITBOXES · ESC SAIR</div>
+    <div class="crt"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const cv = $('game'), ctx = cv.getContext('2d');
+const sc = $('sheet'), sctx = sc.getContext('2d');
+const W = 800, H = 360, GROUND = H - 50;
+const NAMES = ['idle','walk','jump','fall','attack','hurt','death'];
+let img = null, cfg = null, cols = 0, rows = 0;
+const keys = {};
+let testing = false, bot = null, force = null, overlay = null, offc = null;
+const P = {x: W/2, y: GROUND, vy: 0, face: 1, anim: null, t: 0, fi: 0, oneshot: false, ground: true, atk: false};
+
+const say = t => $('msg').textContent = t;
+
+function loadFile(f){
+  if(!f) return;
+  const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => {
+    const [gw, gh] = guessSize(im);
+    pending = {img: im, name: f.name, fw: gw, fh: gh};
+    $('pimg').src = url; $('pimg').hidden = false;
+    refreshUI();
+    say(`"${f.name}" carregada (${im.width}×${im.height}). Passo 2: clique na ação a que essa imagem pertence.`);
+  };
+  im.onerror = () => say('Não consegui ler essa imagem.');
+  im.src = url;
+}
+
+function guessSize(im){
+  const w = im.width, h = im.height;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d', {willReadFrequently: true}); g.drawImage(im, 0, 0);
+  const d = g.getImageData(0, 0, w, h).data;
+  const col = new Array(w).fill(false), row = new Array(h).fill(false);
+  let tr = 0;
+  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
+    if(d[(y*w + x)*4 + 3] > 10){ col[x] = true; row[y] = true; } else tr++;
+  }
+  const seg = a => { let n = 0; a.forEach((v, i) => { if(v && !a[i-1]) n++; }); return n; };
+  // imagem com transparência: conta os blocos de desenho separados por vazios
+  if(tr / (w*h) > .05){
+    const nC = seg(col), nR = seg(row);
+    if(nC <= 1 && nR <= 1) return [w, h];                              // um frame só
+    if(nR === 1 && nC > 1 && w % nC === 0) return [w / nC, h];         // faixa horizontal
+    if(nC === 1 && nR > 1 && h % nR === 0) return [w, h / nR];         // faixa vertical
+    if(nC > 1 && nR > 1 && w % nC === 0 && h % nR === 0) return [w / nC, h / nR];  // grade
+    if(nR === 1 && w % h === 0) return [h, h];
+    if(nC === 1 && h % w === 0) return [w, w];
+  }
+  let best = 64;
+  for(const s of [16,24,32,48,64,96,128,192,256]){
+    const n = w / s;
+    if(w % s === 0 && h % s === 0 && n >= 3 && n <= 16) best = s;
+  }
+  return [best, best];
+}
+
+// ===== uma imagem por ação (idle, walk, jump, attack = soco, kick = chute) =====
+const ACTS = ['idle', 'walk', 'jump', 'attack', 'kick'];
+const DEF_FPS = {idle: 4, walk: 8, jump: 6, attack: 10, kick: 10};
+const sheets = {};            // ação -> lista de trechos [{img, name, fw, fh}]
+let pending = null, sel = null;
+let doc = {scale: 2, facing: 'right', speed: 200, jump: 560, gravity: 1500, animations: {}};
+
+const selAnim = () => (sel && cfg.animations[sel]) ? sel : Object.keys(cfg.animations)[0];
+const writeJson = () => { if(jsonOn) $('json').value = Object.keys(doc.animations).length ? JSON.stringify(doc, null, 2) : ''; };
+const defLoop = a => a === 'idle' || a === 'walk';
+
+let draft = null;    // imagem + ação em ajuste (ainda não armazenada)
+let jsonOn = false;  // o JSON só aparece depois de "Gerar JSON da grade"
+const stored = () => ACTS.filter(n => sheets[n] && doc.animations[n]);
+
+const isAtkAct = a => a === 'attack' || a === 'kick';
+
+// lê a grade de um trecho: quais frames têm desenho e onde ficam os pés de cada um
+function scan(d){
+  const fw = d.fw, fh = d.fh;
+  d.scols = Math.max(0, Math.floor(d.img.width / fw)); d.srows = Math.max(0, Math.floor(d.img.height / fh));
+  d.total = d.scols * d.srows; d.bottoms = []; d.bbox = [];
+  let last = -1, first = -1;
+  if(d.total > 0){
+    const c = document.createElement('canvas'); c.width = d.img.width; c.height = d.img.height;
+    const g = c.getContext('2d', {willReadFrequently: true}); g.drawImage(d.img, 0, 0);
+    for(let i = 0; i < d.total; i++){
+      const px = g.getImageData((i % d.scols) * fw, ((i / d.scols) | 0) * fh, fw, fh).data;
+      let b = -1, l = 1e9, r = -1, t = 1e9;
+      for(let y = 0; y < fh; y++) for(let x = 0; x < fw; x++) if(px[(y * fw + x) * 4 + 3] > 10){
+        if(x < l) l = x; if(x > r) r = x; if(y < t) t = y; b = y;
+      }
+      d.bottoms[i] = b; d.bbox[i] = b >= 0 ? {l, r, t, b} : null;
+      if(b >= 0){ last = i; if(first < 0) first = i; }
+    }
+  }
+  d.detected = last + 1; d.first = Math.max(0, first);
+}
+const footOf = (d, count, start = 0) => { const b = Math.max(-1, ...d.bottoms.slice(start, start + count)); return b >= 0 ? d.fh - 1 - b : 0; };
+
+// trecho = uma imagem com o seu tamanho de frame e o intervalo de frames usado
+function mkSeg(src, rg){
+  const s = {img: src.img, name: src.name, fw: src.fw, fh: src.fh};
+  scan(s);
+  const tot = Math.max(1, s.total);
+  if(rg){ s.start = Math.min(Math.max(0, rg.start | 0), tot - 1); s.count = Math.max(1, Math.min(tot - s.start, rg.count || 1)); }
+  else if(s.detected){ s.start = s.first; s.count = s.detected - s.first; }
+  else { s.start = 0; s.count = 1; }
+  return s;
+}
+const cs = d => d.segs[d.cur];
+const dframes = d => { const out = []; d.segs.forEach((s, si) => { for(let k = 0; k < s.count; k++) out.push({si, i: s.start + k}); }); return out; };
+
+function mkDraft(a, srcs, fresh, rgs){
+  const old = rgs ? (doc.animations[a] || {}) : {};
+  const d = {a, fresh, pt: 0, pi: 0, cur: 0, bmode: 'hurt', bi: 0};
+  d.segs = srcs.map((x, i) => mkSeg(x, rgs && rgs[i]));
+  d.fps = (doc.animations[a] && doc.animations[a].fps) || DEF_FPS[a];
+  d.hurts = (old.hurtboxes || []).map(b => ({x: b.x, y: b.y, w: b.w, h: b.h}));
+  d.atks = (old.attackBoxes || []).map(b => ({x: b.x, y: b.y, w: b.w, h: b.h, act: (b.activeFrames || [0, 0]).slice()}));
+  d.autoH = !d.hurts.length; d.autoA = !d.atks.length;
+  autoBoxes(d);
+  return d;
+}
+
+// hitboxes: medidas em px do sprite, a partir dos pés (x = 0 no centro, y negativo para cima)
+function autoBoxes(d){
+  d.n = d.segs.reduce((t, x) => t + x.count, 0);
+  d.W = Math.max(...d.segs.map(x => x.fw));
+  d.feet = Math.max(...d.segs.map(x => x.fh - footOf(x, x.count, x.start)));
+  let l = 1e9, r = -1e9, t = 1e9, b = -1e9, any = false;
+  d.segs.forEach(x => {
+    const feet = x.fh - footOf(x, x.count, x.start);
+    for(let i = x.start; i < x.start + x.count; i++){
+      const bb = x.bbox[i]; if(!bb) continue; any = true;
+      l = Math.min(l, bb.l - x.fw / 2); r = Math.max(r, bb.r + 1 - x.fw / 2); t = Math.min(t, bb.t - feet); b = Math.max(b, bb.b + 1 - feet);
+    }
+  });
+  if(d.autoH) d.hurts = any ? [{x: Math.round(l), y: Math.round(t), w: Math.round(r - l), h: Math.round(b - t)}] : [];
+  if(isAtkAct(d.a)){
+    if(d.autoA){
+      const h = d.hurts[0] || {x: -16, y: -60, w: 32, h: 60}, m = Math.floor(d.n / 2);
+      const box = d.a === 'kick'      // chute: caixa mais baixa e mais longa; soco: na altura do tronco
+        ? {x: Math.round(h.x + h.w * .5), y: Math.round(h.y + h.h * .55), w: Math.round(h.w * 1.3), h: Math.round(h.h * .3)}
+        : {x: Math.round(h.x + h.w * .5), y: Math.round(h.y + h.h * .25), w: Math.round(h.w * 1.1), h: Math.round(h.h * .45)};
+      box.act = [Math.min(d.n - 1, m), Math.min(d.n - 1, m + 1)]; d.atks = [box];
+    }
+    d.atks.forEach(a => { a.act = a.act.map(v => Math.max(0, Math.min(d.n - 1, v))); });
+  } else d.atks = [];
+}
+function syncBoxUI(d){
+  const isAtk = isAtkAct(d.a);
+  $('bmatk').hidden = !isAtk; if(!isAtk) d.bmode = 'hurt';
+  $('bmhurt').classList.toggle('on', d.bmode === 'hurt'); $('bmatk').classList.toggle('on', d.bmode === 'atk');
+  const list = d.bmode === 'atk' ? d.atks : d.hurts;
+  d.bi = Math.max(0, Math.min(d.bi, list.length - 1));
+  const bs = $('bsel'); bs.innerHTML = '';
+  list.forEach((_, i) => {
+    const b = document.createElement('button'); b.textContent = (d.bmode === 'atk' ? 'Ataque ' : 'Corpo ') + (i + 1);
+    if(i === d.bi) b.className = 'on'; b.onclick = () => { d.bi = i; syncBoxUI(d); }; bs.appendChild(b);
+  });
+  if(list.length < 4){ const b = document.createElement('button'); b.textContent = '+ caixa'; b.onclick = addBox; bs.appendChild(b); }
+  const b = list[d.bi];
+  ['bx', 'by', 'bw', 'bh'].forEach((id, i) => { $(id).value = b ? b['xywh'[i]] : ''; });
+  const showAct = isAtk && d.bmode === 'atk' && !!b;
+  $('bfr').hidden = !showAct;
+  if(showAct){ $('bf0').max = d.n; $('bf1').max = d.n; $('bf0').value = b.act[0] + 1; $('bf1').value = b.act[1] + 1; }
+}
+function addBox(){
+  const d = draft; if(!d) return;
+  const atk = d.bmode === 'atk', list = atk ? d.atks : d.hurts; if(list.length >= 4) return;
+  const cur = list[d.bi] || list[0];
+  const nb = cur ? {x: cur.x + 6, y: cur.y + 6, w: cur.w, h: cur.h} : {x: -10, y: -60, w: 20, h: 40};
+  if(atk) nb.act = cur ? cur.act.slice() : [0, Math.min(d.n - 1, 1)];
+  list.push(nb); d.bi = list.length - 1;
+  if(atk) d.autoA = false; else d.autoH = false;
+  stageUI();
+}
+function setBox(b){
+  const d = draft; if(!d) return;
+  const atk = d.bmode === 'atk', list = atk ? d.atks : d.hurts, cur = list[d.bi];
+  const nb = {x: b.x, y: b.y, w: b.w, h: b.h};
+  if(atk) nb.act = cur ? cur.act.slice() : [0, Math.min(d.n - 1, 1)];
+  if(cur) list[d.bi] = nb; else { list.push(nb); d.bi = list.length - 1; }
+  if(atk) d.autoA = false; else d.autoH = false;
+  stageUI();
+}
+
+function segTabsUI(d){
+  const box = $('segtabs'); box.innerHTML = '';
+  d.segs.forEach((x, i) => {
+    const b = document.createElement('button'); b.textContent = `Trecho ${i + 1} · ${x.fw}×${x.fh} · ${x.count}f`;
+    if(i === d.cur) b.className = 'on'; b.onclick = () => { d.cur = i; refreshUI(); }; box.appendChild(b);
+  });
+  if(d.segs.length < 4){ const b = document.createElement('button'); b.textContent = '+ outro tamanho'; b.onclick = () => $('segfile').click(); box.appendChild(b); }
+  $('segdel').hidden = d.segs.length < 2;
+}
+function addSegment(f){
+  if(!f || !draft) return;
+  const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => {
+    const d = draft; if(!d) return;
+    const [gw, gh] = guessSize(im);
+    d.segs.push(mkSeg({img: im, name: f.name, fw: gw, fh: gh}, null));
+    d.cur = d.segs.length - 1; d.pi = 0; refreshUI();
+    say(`Trecho ${d.segs.length} adicionado (frames de ${gw}×${gh}). Ajuste o tamanho do frame e o intervalo dele; a animação toca os trechos em sequência.`);
+  };
+  im.onerror = () => say('Não consegui ler essa imagem.');
+  im.src = url; $('segfile').value = '';
+}
+
+// painel de ajuste: trechos + grade numerada + slider de frames + FPS + Armazenar
+function stageUI(){
+  const d = draft; $('stage').hidden = !d; if(!d) return;
+  autoBoxes(d); syncBoxUI(d); segTabsUI(d);
+  const s = cs(d), tot = Math.max(1, s.total);
+  const fa = $('fa'), fb = $('fb'), a1 = s.start + 1, b1 = s.start + s.count;
+  fa.min = fb.min = 1; fa.max = fb.max = tot; fa.value = a1; fb.value = b1;
+  fa.style.zIndex = a1 > (1 + tot) / 2 ? 3 : 1; fb.style.zIndex = 2;   // a ponta de cima é sempre a que dá para arrastar
+  const pa = tot > 1 ? (a1 - 1) / (tot - 1) : 0, pb = tot > 1 ? (b1 - 1) / (tot - 1) : 1;
+  $('drfill').style.left = `calc(9px + (100% - 18px) * ${pa})`; $('drfill').style.right = `calc(9px + (100% - 18px) * ${1 - pb})`;
+  $('fcv').textContent = a1 === b1 ? `frame ${a1}` : `${a1} a ${b1} (${s.count} frames)`;
+  $('stgttl').textContent = 'Ação ' + d.a.toUpperCase() + (d.segs.length > 1 ? ' · trecho ' + (d.cur + 1) + ' de ' + d.segs.length : '') + ' · quais frames de "' + s.name + '" usar?';
+  const c = $('stg'); c.width = s.img.width; c.height = s.img.height; c.style.width = Math.min(s.img.width * 3, 560) + 'px';
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(s.img, 0, 0);
+  const fs = Math.max(9, (s.fw / 5) | 0); g.font = fs + 'px system-ui';
+  for(let i = 0; i < s.total; i++){
+    const x = (i % s.scols) * s.fw, y = ((i / s.scols) | 0) * s.fh;
+    const on = i >= s.start && i < s.start + s.count;
+    if(!on){ g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x, y, s.fw, s.fh); }
+    g.strokeStyle = on ? 'rgba(90,150,255,.9)' : 'rgba(255,255,255,.25)'; g.strokeRect(x + .5, y + .5, s.fw - 1, s.fh - 1);
+    g.lineWidth = 3; g.strokeStyle = '#000'; g.strokeText(i + 1, x + 3, y + fs); g.fillStyle = '#fff'; g.fillText(i + 1, x + 3, y + fs); g.lineWidth = 1;
+  }
+  $('stghint').textContent = !s.total ? 'O frame é maior que a imagem: corrija "Frame L × A".'
+    : s.detected ? `Animação com ${d.n} frame(s) no total. Neste trecho há desenho do frame ${s.first + 1} ao ${s.detected}. Arraste as pontas do slider para escolher o intervalo, ajuste o FPS e clique em Armazenar.`
+    : 'Nenhum desenho com esse tamanho de frame: corrija "Frame L × A".';
+  $('store').disabled = d.segs.some(x => !x.total);
+}
+// prévia animada: toca todos os trechos em sequência, com os pés e o centro alinhados
+function stagePrev(dt){
+  const d = draft; if(!d || !d.n) return;
+  const fl = dframes(d); if(!fl.length) return;
+  d.pt += dt; const st = 1 / d.fps;
+  while(d.pt >= st){ d.pt -= st; d.pi = (d.pi + 1) % fl.length; }
+  d.pi = d.pi % fl.length;
+  const f = fl[d.pi], x = d.segs[f.si];
+  const W = d.W, Hh = d.feet, k = Math.max(.5, Math.min(5, 200 / Hh)); d.k = k;
+  const w = Math.round(W * k), h = Math.round(Hh * k), c = $('stgprev');
+  if(c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, w, h);
+  const sf = x.fh - footOf(x, x.count, x.start);
+  g.drawImage(x.img, (f.i % x.scols) * x.fw, ((f.i / x.scols) | 0) * x.fh, x.fw, x.fh, ((W - x.fw) / 2) * k, (Hh - sf) * k, x.fw * k, x.fh * k);
+  g.save(); g.setLineDash([3, 4]); g.lineWidth = 1; g.strokeStyle = 'rgba(255,255,255,.6)';
+  g.beginPath(); g.moveTo(W / 2 * k + .5, 0); g.lineTo(W / 2 * k + .5, h); g.moveTo(0, h - .5); g.lineTo(w, h - .5); g.stroke(); g.restore();
+  const box = (b, col, dash, lw) => {
+    const r = [(b.x + W / 2) * k, (b.y + Hh) * k, b.w * k, b.h * k];
+    g.save(); g.setLineDash(dash); g.lineWidth = lw || 2; g.fillStyle = col + '26'; g.fillRect(...r); g.strokeStyle = col; g.strokeRect(...r); g.restore();
+  };
+  d.hurts.forEach((b, i) => box(b, '#2fe07a', [], d.bmode === 'hurt' && i === d.bi ? 3 : 2));
+  d.atks.forEach((b, i) => { const on = d.pi >= b.act[0] && d.pi <= b.act[1]; box(b, '#ff4d4d', on ? [] : [5, 4], d.bmode === 'atk' && i === d.bi ? 3 : 2); });
+  if(d.drag) box(d.drag, d.bmode === 'atk' ? '#ff4d4d' : '#2fe07a', [3, 3]);
+}
+
+// monta um spritesheet interno (uma linha por ação, pés alinhados) que o motor do jogo usa
+function rebuild(){
+  offc = null; P.anim = null; A.anim = null;
+  const names = ACTS.filter(n => sheets[n] && doc.animations[n]);
+  if(!names.length){ cfg = null; img = null; sc.style.display = 'none'; return; }
+  let CW = 1, CH = 1, N = 1;
+  names.forEach(n => {
+    const segs = doc.animations[n].segments;
+    segs.forEach(x => { CW = Math.max(CW, x.frameWidth); CH = Math.max(CH, x.frameHeight - (x.footOffset || 0)); });
+    N = Math.max(N, segs.reduce((t, x) => t + x.count, 0));
+  });
+  const comp = document.createElement('canvas'); comp.width = CW * N; comp.height = CH * names.length;
+  const g = comp.getContext('2d'); g.imageSmoothingEnabled = false;
+  const animations = {}, mapping = {};
+  names.forEach((n, r) => {
+    const a = doc.animations[n]; let x = 0;
+    a.segments.forEach((sg, si) => {
+      const sh = sheets[n][si]; if(!sh) return;
+      const fw = sg.frameWidth, fh = sg.frameHeight, fo = sg.footOffset || 0, scols = Math.max(1, Math.floor(sh.img.width / fw));
+      for(let i = 0; i < sg.count; i++){
+        const k = (sg.start || 0) + i;
+        g.drawImage(sh.img, (k % scols) * fw, ((k / scols) | 0) * fh, fw, fh, x * CW + ((CW - fw) >> 1), r * CH + CH - (fh - fo), fw, fh); x++;
+      }
+    });
+    animations[n] = {row: r, start: 0, count: x, fps: a.fps, loop: a.loop, hurtboxes: a.hurtboxes, attackBoxes: a.attackBoxes}; mapping[n] = n;
+  });
+  img = comp; cols = N; rows = names.length;
+  cfg = {frameWidth: CW, frameHeight: CH, scale: doc.scale, facing: doc.facing, footOffset: 0, speed: doc.speed, jump: doc.jump, gravity: doc.gravity, animations, mapping};
+  sc.style.display = 'block'; sc.width = comp.width; sc.height = comp.height; sc.style.width = Math.min(comp.width * 3, 600) + 'px';
+}
+
+function clearChar(){ cfg = null; img = null; offc = null; P.anim = null; A.anim = null; sc.style.display = 'none'; }
+
+const totalFrames = a => a.segments.reduce((t, x) => t + x.count, 0);
+function renderStored(){
+  const ul = $('stored'); ul.innerHTML = '';
+  stored().forEach(n => {
+    const a = doc.animations[n], li = document.createElement('li');
+    const nb = (a.hurtboxes || []).length, na = (a.attackBoxes || []).length;
+    li.textContent = `${n.toUpperCase()} · ${totalFrames(a)} frame(s)` + (a.segments.length > 1 ? ` em ${a.segments.length} trechos` : '') +
+      ` · ${a.fps} fps · caixas ${nb}${na ? '+' + na : ''} · ` + [...new Set(a.segments.map(x => x.image))].join(', ');
+    const x = document.createElement('button'); x.className = 'alt'; x.textContent = 'remover'; x.onclick = () => removeAct(n);
+    li.appendChild(x); ul.appendChild(li);
+  });
+}
+function removeAct(n){
+  delete sheets[n]; delete doc.animations[n];
+  if(sel === n) sel = null;
+  if(draft && draft.a === n) draft = null;
+  clearChar(); refreshUI(); say(`Ação ${n.toUpperCase()} removida.`);
+}
+
+function refreshUI(){
+  document.querySelectorAll('#acts button').forEach(b => {
+    const a = b.dataset.a; b.classList.toggle('on', a === sel); b.classList.toggle('has', !!sheets[a]);
+  });
+  $('acts').classList.toggle('want', !!pending);
+  const t = pending || (draft ? cs(draft) : (sel && sheets[sel] && sheets[sel][0]));
+  if(t){ $('fw').value = t.fw; $('fh').value = t.fh; }
+  $('scale').value = doc.scale; $('scalev').textContent = doc.scale;
+  $('flip').checked = doc.facing === 'left';
+  syncFps(); stageUI(); renderStored(); writeJson();
+}
+function syncFps(){
+  const d = draft || (sel && doc.animations[sel]);
+  $('fps').disabled = !d; $('fps2').disabled = !d;
+  if(d){
+    const v = Math.min(10, Math.max(2, d.fps));
+    $('fps').value = v; $('fpsv').textContent = d.fps; $('fps2').value = v; $('fps2v').textContent = d.fps;
+  }
+}
+
+function pickAct(a){
+  sel = a;
+  const srcs = pending ? [pending] : (draft && draft.fresh ? draft.segs : null);
+  if(srcs){                                  // imagem nova -> esta ação (ainda não armazenada)
+    draft = mkDraft(a, srcs.map(x => ({img: x.img, name: x.name, fw: x.fw, fh: x.fh})), true, null);
+    pending = null; $('pimg').hidden = true; $('file').value = '';
+    refreshUI(); $('stage').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    say(`Imagem em ${a.toUpperCase()}: ajuste os frames e o FPS no card "Spritesheet montado" e clique em Armazenar. Para misturar frames de outro tamanho, use "+ outro tamanho".`);
+  } else if(sheets[a]){                      // ação já armazenada: reabre para editar
+    draft = mkDraft(a, sheets[a], false, doc.animations[a].segments);
+    refreshUI(); say(`Ação ${a.toUpperCase()} aberta para edição. Clique em Armazenar para guardar as mudanças.`);
+  } else {
+    draft = null; refreshUI();
+    say(`Ainda não há imagem para ${a.toUpperCase()}. Escolha uma imagem (passo 1) e clique em ${a} de novo.`);
+  }
+}
+
+// guarda a ação e limpa o personagem da tela, para enviar a próxima imagem
+function storeDraft(){
+  const d = draft; if(!d || d.segs.some(x => !x.total)) return;
+  const old = doc.animations[d.a] || {};
+  sheets[d.a] = d.segs.map(x => ({img: x.img, name: x.name, fw: x.fw, fh: x.fh}));
+  const an = {fps: d.fps, loop: old.loop !== undefined ? old.loop : defLoop(d.a),
+    segments: d.segs.map(x => ({image: x.name, frameWidth: x.fw, frameHeight: x.fh, start: x.start, count: x.count, footOffset: footOf(x, x.count, x.start)}))};
+  if(d.hurts.length) an.hurtboxes = d.hurts.map(b => ({x: b.x, y: b.y, w: b.w, h: b.h}));
+  if(isAtkAct(d.a) && d.atks.length) an.attackBoxes = d.atks.map(b => ({x: b.x, y: b.y, w: b.w, h: b.h, activeFrames: b.act.slice()}));
+  doc.animations[d.a] = an;
+  const a = d.a, n = d.n, fps = d.fps, nseg = d.segs.length;
+  draft = null; sel = null; clearChar();
+  $('steps').innerHTML = ''; $('bar').style.width = '0%';
+  $('makestat').textContent = 'Armazene as ações (idle, walk, jump, attack, kick). No final, gere o personagem.';
+  refreshUI();
+  const falta = ACTS.filter(k => !sheets[k]);
+  say(`✓ ${a.toUpperCase()} armazenada (${n} frame(s)${nseg > 1 ? ' em ' + nseg + ' trechos' : ''}, ${fps} fps) e o personagem foi limpo da tela. ` +
+      (falta.length ? `Faltam: ${falta.join(', ')}. Envie a próxima imagem ou vá ao passo 4.` : 'Todas as ações armazenadas: vá ao passo 4.'));
+}
+
+function refit(a){
+  const an = doc.animations[a], sh = sheets[a];
+  an.segments = an.segments.map((sg, i) => {
+    const d = {img: sh[i].img, fw: sg.frameWidth, fh: sg.frameHeight}; scan(d);
+    const start = Math.min(sg.start || 0, Math.max(0, d.total - 1)), count = Math.max(1, Math.min(sg.count || 1, d.total - start));
+    return Object.assign({}, sg, {start, count, footOffset: footOf(d, count, start)});
+  });
+}
+
+function generate(){
+  const names = stored();
+  if(!names.length) return say('Nada para gerar ainda: armazene pelo menos uma ação.');
+  names.forEach(refit);
+  if(cfg) rebuild();
+  jsonOn = true; refreshUI();
+  say(`JSON criado: ${names.map(n => n + ' (' + totalFrames(doc.animations[n]) + ')').join(', ')}.`);
+}
+
+// aceita o JSON novo (segments, hurtboxes, attackBoxes) e o formato antigo (um trecho, uma caixa)
+function normAnim(n, a){
+  const sh = sheets[n]; if(!a || !sh) return null;
+  let segs = Array.isArray(a.segments) ? a.segments : [{image: a.image, frameWidth: a.frameWidth, frameHeight: a.frameHeight, start: a.start, count: a.count, footOffset: a.footOffset}];
+  segs = segs.slice(0, sh.length).map((g, i) => ({image: g.image || sh[i].name, frameWidth: g.frameWidth || sh[i].fw, frameHeight: g.frameHeight || sh[i].fh,
+    start: Math.max(0, g.start || 0), count: Math.max(1, g.count || 1), footOffset: g.footOffset || 0}));
+  if(!segs.length) return null;
+  segs.forEach((g, i) => { sh[i].fw = g.frameWidth; sh[i].fh = g.frameHeight; });
+  const out = {fps: a.fps || DEF_FPS[n], loop: a.loop !== undefined ? a.loop : defLoop(n), segments: segs};
+  const hb = a.hurtboxes || (a.hurtbox ? [a.hurtbox] : []);
+  if(hb.length) out.hurtboxes = hb.slice(0, 4).map(b => ({x: b.x, y: b.y, w: b.w, h: b.h}));
+  const ab = a.attackBoxes || (a.attackBox ? [Object.assign({}, a.attackBox, {activeFrames: a.activeFrames})] : []);
+  if(ab.length && isAtkAct(n)) out.attackBoxes = ab.slice(0, 4).map(b => ({x: b.x, y: b.y, w: b.w, h: b.h, activeFrames: b.activeFrames || [0, 0]}));
+  return out;
+}
+function applyJson(){
+  try{
+    const c = JSON.parse($('json').value);
+    if(!c.animations || typeof c.animations !== 'object') throw new Error('faltou "animations"');
+    const an = {};
+    for(const n of ACTS){ const o = normAnim(n, c.animations[n]); if(o) an[n] = o; }
+    doc = {scale: c.scale || 2, facing: c.facing || 'right', speed: c.speed || 200, jump: c.jump || 560, gravity: c.gravity || 1500, animations: an};
+    const ign = Object.keys(c.animations).filter(n => !an[n]);
+    if(cfg) rebuild();
+    jsonOn = true; refreshUI();
+    say('JSON aplicado.' + (ign.length ? ' Ignorado (sem imagem armazenada): ' + ign.join(', ') + '.' : ''));
+  }catch(e){ say('JSON inválido: ' + e.message); }
+}
+
+function frameList(a){
+  if(Array.isArray(a.frames)) return a.frames.map(i => ({c: i % cols, r: Math.floor(i / cols)}));
+  const out = [];
+  for(let i = 0; i < (a.count || 1); i++) out.push({c: (a.start || 0) + i, r: a.row || 0});
+  return out;
+}
+
+function setAnim(name){
+  const ok = !!(name && cfg.animations[name]);
+  P.freeze = !ok;   // ação não enviada: não inventa animação, só segura o primeiro frame
+  if(!ok) name = (P.anim && cfg.animations[P.anim]) ? P.anim : Object.keys(cfg.animations)[0];
+  if(P.anim !== name){ P.anim = name; P.t = 0; P.fi = 0; syncFps(); }
+  if(P.freeze) P.fi = 0;
+}
+
+function pick(...ns){ for(const n of ns) if(cfg.animations[n]) return n; return null; }
+
+function update(dt){
+  const I = testing ? bot : {L: keys.ArrowLeft || keys.KeyA, R: keys.ArrowRight || keys.KeyD, J: keys.Space || keys.ArrowUp || keys.KeyW};
+  const J = I.J;
+  const dir = (I.R ? 1 : 0) - (I.L ? 1 : 0);
+  if(!P.oneshot){
+    P.x += dir * cfg.speed * dt;
+    if(dir) P.face = dir;
+  }
+  P.x = Math.max(20, Math.min(W - 20, P.x));
+  if(J && P.ground && !P.oneshot){ P.vy = -cfg.jump; P.ground = false; }
+  P.vy += cfg.gravity * dt; P.y += P.vy * dt;
+  if(P.y >= GROUND){ P.y = GROUND; P.vy = 0; P.ground = true; }
+  P.act = !P.ground ? (P.vy < 0 ? 'jump' : 'fall') : (dir ? 'walk' : 'idle'); P.clk = (P.clk || 0) + dt;
+
+  if(testing && force){
+    if(P.anim !== force) setAnim(force);
+  } else if($('manual').checked){
+    if(P.anim !== selAnim()) setAnim(selAnim());
+  } else if(P.atk && cfg.animations.attack){
+    P.atk = false; P.kick = false; P.oneshot = true; P.anim = null; setAnim('attack');
+  } else if(P.kick && cfg.animations.kick){
+    P.kick = false; P.atk = false; P.oneshot = true; P.anim = null; setAnim('kick');
+  } else if(!P.oneshot){
+    P.atk = false; P.kick = false;
+    if(!P.ground) setAnim(P.vy < 0 ? pick('jump') : pick('fall', 'jump'));
+    else setAnim(dir ? pick('walk') : pick('idle'));
+  }
+
+  const a = cfg.animations[P.anim]; if(!a) return;
+  const fl = frameList(a), step = 1 / (a.fps || 8);
+  P.t += dt;
+  while(!P.freeze && P.t >= step){
+    P.t -= step; P.fi++;
+    if(P.fi >= fl.length){
+      if(a.loop === false && !($('manual').checked && !testing)){ P.fi = fl.length - 1; if(P.oneshot) P.oneshot = false; }
+      else P.fi = 0;
+    }
+  }
+}
+
+// sem efeitos simulados: só os frames enviados pelo usuário são desenhados
+function fx(){ return {dx: 0, dy: 0, sx: 1, sy: 1, rot: 0}; }
+function drawSprite(g, x, y, face, act, clk, f, fl){
+  const fw = cfg.frameWidth, fh = cfg.frameHeight, s = cfg.scale, fo = cfg.footOffset || 0, e = fx(act, clk, fl);
+  const flip = (face === -1) !== (cfg.facing === 'left');
+  g.save(); g.translate((x + e.dx * face) | 0, (y + e.dy) | 0); g.rotate(e.rot * face); g.scale(flip ? -e.sx : e.sx, e.sy);
+  g.drawImage(img, f.c*fw, f.r*fh, fw, fh, -fw*s/2, -fh*s + fo*s, fw*s, fh*s);
+  g.restore();
+}
+
+const hitR = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+function boxRect(b, x, y, flip){
+  const s = cfg.scale;
+  return {x: x + (flip ? -(b.x + b.w) : b.x) * s, y: y + b.y * s, w: b.w * s, h: b.h * s};
+}
+function drawBoxes(g, a, fi, x, y, face){
+  const flip = (face === -1) !== (cfg.facing === 'left');
+  const one = (b, col, dash, fa) => {
+    const r = boxRect(b, x, y, flip); g.save(); g.setLineDash(dash); g.lineWidth = 2;
+    g.fillStyle = col + fa; g.fillRect(r.x, r.y, r.w, r.h); g.strokeStyle = col; g.strokeRect(r.x, r.y, r.w, r.h); g.restore();
+  };
+  (a.hurtboxes || []).forEach(b => one(b, '#2fe07a', [], '22'));
+  (a.attackBoxes || []).forEach(b => { const af = b.activeFrames, on = !af || (fi >= af[0] && fi <= af[1]); one(b, '#ff4d4d', on ? [] : [5, 4], on ? '33' : '11'); });
+}
+
+function draw(){
+  ctx.fillStyle = '#2b3040'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#3d4560'; ctx.fillRect(0, GROUND, W, H - GROUND);
+  if(!img || !cfg){
+    ctx.fillStyle = '#aab'; ctx.font = '18px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText((stored().length ? 'Ações armazenadas. Gere o personagem jogável.' : 'Envie a imagem, escolha a ação e clique em Armazenar'), W/2, H/2); return;
+  }
+  const a = cfg.animations[P.anim]; if(!a) return;
+  const fl = frameList(a), f = fl[Math.min(P.fi, fl.length - 1)];
+  const fw = cfg.frameWidth, fh = cfg.frameHeight, s = cfg.scale;
+  const flip = (P.face === -1) !== (cfg.facing === 'left');
+  ctx.imageSmoothingEnabled = false;
+  drawSprite(ctx, P.x, P.y, P.face, P.act, P.clk || 0, f, fl);
+  if($('showbox').checked) drawBoxes(ctx, a, P.fi, P.x, P.y, P.face);
+  // mini sheet
+  sctx.clearRect(0, 0, sc.width, sc.height); sctx.drawImage(img, 0, 0);
+  sctx.strokeStyle = 'rgba(120,160,255,.5)'; sctx.lineWidth = 1;
+  for(let c = 0; c <= cols; c++){ sctx.beginPath(); sctx.moveTo(c*fw+.5, 0); sctx.lineTo(c*fw+.5, rows*fh); sctx.stroke(); }
+  for(let r = 0; r <= rows; r++){ sctx.beginPath(); sctx.moveTo(0, r*fh+.5); sctx.lineTo(cols*fw, r*fh+.5); sctx.stroke(); }
+  sctx.strokeStyle = '#ff4d4d'; sctx.lineWidth = Math.max(2, fw / 16);
+  sctx.strokeRect(f.c*fw, f.r*fh, fw, fh);
+  if(overlay && performance.now() < overlay.until){
+    ctx.font = '15px system-ui'; ctx.textAlign = 'left';
+    const w = ctx.measureText(overlay.t).width + 20;
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(10, 10, w, 30);
+    ctx.fillStyle = '#fff'; ctx.fillText(overlay.t, 20, 31);
+  }
+}
+
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  if(cfg && img && !arcOn) update(dt);
+  if(draft) stagePrev(dt);
+  draw(); requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// gerar personagem jogável
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const label = t => { overlay = {t, until: Infinity}; $('makestat').textContent = t + '…'; };
+function addStep(t){ const li = document.createElement('li'); li.className = 'run'; li.textContent = t; $('steps').appendChild(li); li.scrollIntoView({block: 'nearest'}); return li; }
+function mark(li, cls, t){ li.className = cls; if(t) li.textContent = t; }
+function cellHasPixels(c, r){
+  if(!offc){ offc = document.createElement('canvas'); offc.width = img.width; offc.height = img.height; offc.getContext('2d', {willReadFrequently: true}).drawImage(img, 0, 0); }
+  const fw = cfg.frameWidth, fh = cfg.frameHeight;
+  const d = offc.getContext('2d').getImageData(c*fw, r*fh, fw, fh).data;
+  for(let i = 3; i < d.length; i += 4) if(d[i] > 10) return true;
+  return false;
+}
+
+async function makePlayable(){
+  if(testing) return;
+  if(draft) return say('Há uma ação em ajuste: clique em Armazenar (ou Cancelar) antes de gerar o personagem.');
+  if(!stored().length) return say('Armazene pelo menos uma ação (imagem, ação, frames e Armazenar) antes de gerar o personagem.');
+  rebuild(); refreshUI();
+  const names = Object.keys(cfg.animations);
+  const total = names.length + 7;
+  let done = 0, bad = 0, warn = 0, li;
+  const bar = $('bar'); bar.style.width = '0%'; $('steps').innerHTML = '';
+  const tick = () => { done++; bar.style.width = Math.round(done / total * 100) + '%'; };
+  $('make').disabled = true; $('manual').checked = false;
+  cv.scrollIntoView({behavior: 'smooth', block: 'center'});
+  testing = true; bot = {L: false, R: false, J: false}; force = null;
+  P.x = W / 2; P.vy = 0; P.y = GROUND; P.oneshot = false; P.face = 1;
+
+  label('Lendo grade'); li = addStep('Lendo imagem e grade'); await sleep(400);
+  if(cols < 1 || rows < 1){ mark(li, 'fail', 'Grade inválida: o frame é maior que a imagem'); bad++; }
+  else mark(li, 'ok', `Grade ${cols}×${rows} (frames de ${cfg.frameWidth}×${cfg.frameHeight})`);
+  tick();
+
+  for(const n of names){
+    const a = cfg.animations[n];
+    label('Validando: ' + n); li = addStep('Animação ' + n); force = n;
+    await sleep(700);
+    const fl = frameList(a);
+    const oob = fl.filter(f => f.c < 0 || f.r < 0 || f.c >= cols || f.r >= rows).length;
+    let empty = 0;
+    if(!oob) fl.forEach(f => { if(!cellHasPixels(f.c, f.r)) empty++; });
+    if(!fl.length || oob){ mark(li, 'fail', `${n}: ${oob || 'nenhum'} frame(s) fora da imagem`); bad++; }
+    else if(empty){ mark(li, 'warn', `${n}: ${fl.length} frames, ${empty} vazio(s)`); warn++; }
+    else mark(li, 'ok', `${n}: ${fl.length} frames a ${a.fps || 8} fps`);
+    tick();
+  }
+  force = null; P.anim = null;
+
+  const has = k => !!cfg.animations[k], ALL = ['idle', 'walk', 'jump', 'attack', 'kick'];
+  label('Conferindo ações'); li = addStep('Ações enviadas'); await sleep(400);
+  const got = ALL.filter(has), miss = ALL.filter(k => !has(k));
+  mark(li, 'ok', 'Geradas: ' + got.join(', ') + (miss.length ? ' · não enviadas (não geradas): ' + miss.join(', ') : ''));
+  tick();
+
+  li = addStep('Teste: andar');
+  if(has('walk')){ label('Testando: andar'); bot.R = true; await sleep(900); bot.R = false; bot.L = true; await sleep(900); bot.L = false; await sleep(300); mark(li, 'ok', 'Andar (walk): ok'); }
+  else mark(li, 'skip', 'Andar: sem imagem de walk (não gerado)');
+  tick();
+
+  li = addStep('Teste: pular');
+  if(has('jump')){ label('Testando: pular'); bot.J = true; await sleep(150); bot.J = false; await sleep(1200); mark(li, 'ok', 'Pular (jump): ok'); }
+  else mark(li, 'skip', 'Pular: sem imagem de jump (não gerado)');
+  tick();
+
+  li = addStep('Teste: atacar');
+  if(has('attack')){ label('Testando: atacar'); P.atk = true; await sleep(1100); mark(li, 'ok', 'Atacar (attack): ok'); }
+  else mark(li, 'skip', 'Atacar (soco): sem imagem de attack (não gerado)');
+  tick();
+
+  li = addStep('Teste: chutar');
+  if(has('kick')){ label('Testando: chutar'); P.kick = true; await sleep(1100); mark(li, 'ok', 'Chutar (kick): ok'); }
+  else mark(li, 'skip', 'Chutar: sem imagem de kick (não gerado)');
+  tick();
+
+  li = addStep('Liberando controles'); await sleep(300);
+  testing = false; bot = null; P.anim = null; P.oneshot = false; P.atk = false; P.kick = false;
+  mark(li, 'ok', 'Controles liberados'); tick();
+  const msg = bad ? `✗ ${bad} erro(s) e ${warn} aviso(s): revise o JSON. Os controles estão liberados mesmo assim.`
+    : warn ? `✓ Personagem jogável com ${warn} aviso(s). Use as setas/WASD, Espaço, J (soco) e K (chute).`
+    : '✓ Personagem jogável! Use as setas/WASD, Espaço, J (soco) e K (chute).';
+  $('makestat').textContent = msg;
+  overlay = {t: bad ? 'Pronto, com erros' : 'Pronto! Jogue agora', until: performance.now() + 3500};
+  $('make').disabled = false; $('make').textContent = '▶ Gerar novamente';
+}
+
+// ===== TESTAR MODELO (arena de luta) =====
+const AW = 960, AH = 540, GY = 448;
+const ac = $('arc'), actx = ac.getContext('2d');
+let arcOn = false, arcRaf = 0, aLast = 0, arcBg = null, prevAtk = false, prevKick = false, mPunch = false, mKick = false, shake = 0, aiMode = 'luta', winner = null;
+let parts = [];
+const A = {x: 240, y: GY, vy: 0, face: 1, anim: null, t: 0, fi: 0, ground: true, oneshot: false, hit: false, hp: 100, inv: 0, stun: 0, kx: 0, tt: 0};
+const E = {x: 720, u: 1.2, h: 120, face: -1, hp: 100, st: 'idle', t: 0, cd: 1, hit: false, stun: 0, kx: 0, flash: 0, ko: false, tt: 0};
+const fr = (g, c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+const burst = (x, y, c, n) => { for(let i = 0; i < n; i++) parts.push({x, y, vx: (Math.random() - .5) * 400, vy: -Math.random() * 400, l: .5 + Math.random() * .5, c}); };
+const clampX = x => Math.max(40, Math.min(AW - 40, x));
+const outline = (g, r, col, dash) => { g.save(); g.setLineDash(dash); g.lineWidth = 2; g.fillStyle = col + '22'; g.fillRect(r.x, r.y, r.w, r.h); g.strokeStyle = col; g.strokeRect(r.x, r.y, r.w, r.h); g.restore(); };
+
+// fundo em degradê
+function buildBg(){
+  const c = document.createElement('canvas'); c.width = AW; c.height = AH;
+  const g = c.getContext('2d');
+  let gr = g.createLinearGradient(0, 0, 0, GY);
+  gr.addColorStop(0, '#0f0c29'); gr.addColorStop(.5, '#302b63'); gr.addColorStop(.8, '#8e3a8f'); gr.addColorStop(1, '#ff7a59');
+  g.fillStyle = gr; g.fillRect(0, 0, AW, GY);
+  const rg = g.createRadialGradient(AW / 2, GY - 60, 20, AW / 2, GY - 60, 460);
+  rg.addColorStop(0, 'rgba(255,255,255,.14)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = rg; g.fillRect(0, 0, AW, GY);
+  gr = g.createLinearGradient(0, GY, 0, AH); gr.addColorStop(0, '#2a1d4a'); gr.addColorStop(1, '#0a0716');
+  g.fillStyle = gr; g.fillRect(0, GY, AW, AH - GY);
+  g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(0, GY, AW, 3);
+  g.fillStyle = 'rgba(255,255,255,.06)';
+  for(let y = GY + 14; y < AH; y += 18 + (y - GY) / 8) g.fillRect(0, y | 0, AW, 2);
+  return c;
+}
+
+function hud(){ $('hp1').style.width = Math.max(0, A.hp) + '%'; $('hp2').style.width = Math.max(0, E.hp) + '%'; }
+
+function arcReset(){
+  const a0 = cfg.animations.idle || cfg.animations[Object.keys(cfg.animations)[0]], hb = a0 && a0.hurtbox;
+  const ph = hb ? hb.h * cfg.scale : cfg.frameHeight * cfg.scale * .8;
+  E.h = Math.round(Math.max(90, Math.min(230, ph))); E.u = E.h / 100;
+  Object.assign(E, {x: 720, face: -1, hp: 100, st: 'idle', t: 0, cd: 1.2, hit: false, stun: 0, kx: 0, flash: 0, ko: false, tt: 0});
+  Object.assign(A, {x: 240, y: GY, vy: 0, face: 1, anim: null, t: 0, fi: 0, ground: true, oneshot: false, hit: false, hp: 100, inv: 0, stun: 0, kx: 0, tt: 0});
+  parts = []; winner = null; prevAtk = false; prevKick = false; mPunch = mKick = false; shake = 0; hud();
+}
+
+function aSet(n, f){
+  const ok = !!(n && cfg.animations[n]);
+  A.freeze = !ok;
+  if(!ok) n = (A.anim && cfg.animations[A.anim]) ? A.anim : Object.keys(cfg.animations)[0];
+  if(A.anim !== n || f){ A.anim = n; A.t = 0; A.fi = 0; $('aan').textContent = 'ANIM: ' + n.toUpperCase(); }
+  if(A.freeze) A.fi = 0;
+}
+
+// caixas do jogador (vêm do JSON do modelo) e do oponente, em coordenadas do mundo
+const pFlip = () => (A.face === -1) !== (cfg.facing === 'left');
+function pHurts(){          // todas as hurtboxes do jogador (frame atual) no mundo
+  let L = (cfg.animations[A.anim] || {}).hurtboxes;
+  if(!L || !L.length) for(const n of Object.keys(cfg.animations)){ const l = cfg.animations[n].hurtboxes; if(l && l.length){ L = l; break; } }
+  if(!L || !L.length) L = [{x: -cfg.frameWidth / 4, y: -cfg.frameHeight * .8, w: cfg.frameWidth / 2, h: cfg.frameHeight * .8}];
+  return L.map(b => boxRect(b, A.x, A.y, pFlip()));
+}
+function pAtks(){           // attackBoxes ativas agora (cada uma tem os próprios frames); sem attackBox o golpe não acerta
+  const a = cfg.animations[A.anim]; if(!a || !A.oneshot || !a.attackBoxes) return [];
+  const out = [];
+  a.attackBoxes.forEach((b, i) => { const af = b.activeFrames || [0, 9999]; if(A.fi >= af[0] && A.fi <= af[1]) out.push({r: boxRect(b, A.x, A.y, pFlip()), i}); });
+  return out;
+}
+const eHurt = () => ({x: E.x - 16 * E.u, y: GY - 100 * E.u, w: 32 * E.u, h: 100 * E.u});
+const eAtkRect = () => ({x: E.face > 0 ? E.x + 10 * E.u : E.x - 72 * E.u, y: GY - 70 * E.u, w: 62 * E.u, h: 26 * E.u});
+
+function hurtEnemy(r, eh){
+  const kick = A.anim === 'kick';   // o chute causa mais dano e empurra mais
+  E.hp = Math.max(0, E.hp - (kick ? 14 : 10)); E.stun = kick ? .45 : .35; E.st = 'idle'; E.t = 0; E.kx = A.face * (kick ? 340 : 280); E.flash = .12; shake = kick ? 8 : 6;
+  const ox = (Math.max(r.x, eh.x) + Math.min(r.x + r.w, eh.x + eh.w)) / 2, oy = (Math.max(r.y, eh.y) + Math.min(r.y + r.h, eh.y + eh.h)) / 2;
+  burst(ox, oy, '#ffffff', 6); burst(ox, oy, '#ffd04f', 8);
+  if(E.hp <= 0){ E.ko = true; E.tt = 0; winner = 'p1'; }
+  hud();
+}
+function hurtPlayer(r, ph){
+  A.hp = Math.max(0, A.hp - 8); A.inv = .7; A.stun = .25; A.oneshot = false; A.kx = E.face * 260; shake = 6;
+  const ox = (Math.max(r.x, ph.x) + Math.min(r.x + r.w, ph.x + ph.w)) / 2, oy = (Math.max(r.y, ph.y) + Math.min(r.y + r.h, ph.y + ph.h)) / 2;
+  burst(ox, oy, '#ffffff', 6); burst(ox, oy, '#ff5a4f', 8);
+  if(A.hp <= 0){ A.tt = 0; winner = 'cpu'; }
+  hud();
+}
+
+// oponente: anda até o jogador e ataca (preparo, golpe, recuperação); no modo PARADO só fica em pé
+function enemyUpdate(dt){
+  if(E.ko){ E.tt += dt; return; }
+  E.flash = Math.max(0, E.flash - dt);
+  if(E.kx){ E.x += E.kx * dt; E.kx *= Math.pow(.02, dt); if(Math.abs(E.kx) < 8) E.kx = 0; }
+  E.x = clampX(E.x);
+  if(E.stun > 0){ E.stun -= dt; if(E.stun <= 0) E.st = 'idle'; return; }
+  if(aiMode === 'parado' || A.hp <= 0){ E.st = 'idle'; return; }
+  const dx = A.x - E.x, u = E.u;
+  E.cd -= dt;
+  if(E.st === 'idle' || E.st === 'walk'){
+    E.face = dx >= 0 ? 1 : -1;
+    if(Math.abs(dx) > 58 * u){ E.x += E.face * 120 * dt; E.st = 'walk'; }
+    else { E.st = 'idle'; if(E.cd <= 0){ E.st = 'windup'; E.t = 0; E.hit = false; } }
+  } else {
+    E.t += dt;
+    if(E.st === 'windup' && E.t >= .35){ E.st = 'strike'; E.t = 0; }
+    else if(E.st === 'strike' && E.t >= .15){ E.st = 'recover'; E.t = 0; }
+    else if(E.st === 'recover' && E.t >= .4){ E.st = 'idle'; E.cd = .8 + Math.random() * .8; }
+  }
+}
+
+function arcUpdate(dt){
+  const act = A.hp > 0 && A.stun <= 0;
+  const L = act && (keys.ArrowLeft || keys.KeyA), Rr = act && (keys.ArrowRight || keys.KeyD), J = act && (keys.Space || keys.ArrowUp || keys.KeyW);
+  const atk = !!(keys.KeyJ || keys.KeyZ), press = atk && !prevAtk; prevAtk = atk;
+  const kk = !!(keys.KeyK || keys.KeyX), kpress = kk && !prevKick; prevKick = kk;
+  const dir = (Rr ? 1 : 0) - (L ? 1 : 0);
+  A.inv = Math.max(0, A.inv - dt); A.stun = Math.max(0, A.stun - dt);
+  if(A.hp <= 0) A.tt += dt;
+  if(!A.oneshot){ A.x += dir * cfg.speed * 1.15 * dt; if(dir) A.face = dir; }
+  if(A.kx){ A.x += A.kx * dt; A.kx *= Math.pow(.02, dt); if(Math.abs(A.kx) < 8) A.kx = 0; }
+  A.x = clampX(A.x);
+  if(J && A.ground && !A.oneshot){ A.vy = -cfg.jump * 1.2; A.ground = false; }
+  A.vy += cfg.gravity * dt; A.y += A.vy * dt;
+  if(A.y >= GY){ A.y = GY; A.vy = 0; A.ground = true; } else A.ground = false;
+
+  const wantPunch = (press || mPunch) && cfg.animations.attack, wantKick = (kpress || mKick) && cfg.animations.kick;
+  mPunch = mKick = false;
+  if(act && !A.oneshot && (wantPunch || wantKick)){ A.oneshot = true; A.hit = false; A.hitSet = new Set(); aSet(wantPunch ? 'attack' : 'kick', true); }
+  else if(!A.oneshot) aSet(!A.ground ? (A.vy < 0 ? pick('jump') : pick('fall', 'jump')) : (dir ? pick('walk') : pick('idle')));
+  const a = cfg.animations[A.anim];
+  if(a){
+    const fl = frameList(a), st = 1 / (a.fps || 8); A.t += dt;
+    while(!A.freeze && A.t >= st){
+      A.t -= st; A.fi++;
+      if(A.fi >= fl.length){ if(a.loop === false || A.oneshot){ A.fi = fl.length - 1; A.oneshot = false; } else A.fi = 0; }
+    }
+  }
+
+  // jogador acerta o oponente: cada attackBox ativa x hurtbox do oponente (cada caixa acerta uma vez por golpe)
+  if(E.hp > 0){
+    A.hitSet = A.hitSet || new Set();
+    for(const o of pAtks()){
+      if(A.hitSet.has(o.i)) continue;
+      const eh = eHurt();
+      if(hitR(o.r, eh)){ A.hitSet.add(o.i); hurtEnemy(o.r, eh); }
+    }
+  }
+  enemyUpdate(dt);
+  // oponente acerta o jogador: attackBox do oponente (só no golpe) x hurtbox do jogador
+  if(E.st === 'strike' && !E.hit && A.hp > 0 && A.inv <= 0){
+    const r = eAtkRect();
+    for(const ph of pHurts()) if(hitR(r, ph)){ E.hit = true; hurtPlayer(r, ph); break; }
+  }
+  parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 600 * dt; p.l -= dt; });
+  parts = parts.filter(p => p.l > 0);
+  shake = Math.max(0, shake - 30 * dt);
+}
+
+function drawEnemy(g){
+  const u = E.u, x = E.x | 0, fl = E.flash > 0, c = col => fl ? '#fff' : col;
+  fr(g, 'rgba(0,0,0,.35)', x - 30 * u | 0, GY - 2, 60 * u | 0, 6);
+  g.save(); g.translate(x, GY); g.scale(E.face, 1);
+  if(E.ko) g.rotate(-Math.min(1.45, E.tt * 3));
+  g.translate(E.stun > 0 ? -6 : 0, E.st === 'walk' ? Math.sin(Date.now() / 90) * 2 : 0);
+  const R = (col, a, b, w, h) => fr(g, c(col), (a * u) | 0, (b * u) | 0, Math.max(1, (w * u) | 0), Math.max(1, (h * u) | 0));
+  R('#2a2f4a', -14, -38, 11, 38); R('#2a2f4a', 3, -38, 11, 38); R('#14172b', -15, -6, 13, 6); R('#14172b', 2, -6, 13, 6);
+  R('#3f4566', -22, -70, 8, 28);
+  R('#59607f', -16, -74, 32, 38); R('#ff3b3b', -4, -62, 8, 8); R('#3f4566', -16, -42, 32, 6);
+  R('#7a82a8', -11, -98, 22, 22); R('#ff3b3b', 2, -90, 8, 5);
+  if(E.st === 'windup') R('#8a92b8', -24, -64, 24, 9);
+  else if(E.st === 'strike'){ R('#8a92b8', 8, -66, 54, 10); R('#ff7a59', 54, -69, 14, 16); }
+  else if(E.st === 'recover') R('#8a92b8', 8, -64, 28, 10);
+  else R('#8a92b8', 8, -68, 10, 28);
+  g.restore();
+}
+
+function arcRender(){
+  const g = actx, a = cfg.animations[A.anim];
+  g.imageSmoothingEnabled = false;
+  g.save(); if(shake) g.translate(((Math.random() - .5) * shake) | 0, ((Math.random() - .5) * shake) | 0);
+  g.drawImage(arcBg, 0, 0);
+  drawEnemy(g);
+  if(a){
+    const fl = frameList(a), f = fl[Math.min(A.fi, fl.length - 1)], fw = cfg.frameWidth, fh = cfg.frameHeight, s = cfg.scale;
+    const px = A.x | 0;
+    fr(g, 'rgba(0,0,0,.35)', px - 28, GY - 2, 56, 6);
+    g.save();
+    if(A.inv > 0 && ((A.inv * 20) | 0) % 2) g.globalAlpha = .4;
+    g.translate(px, A.y | 0);
+    if(A.hp <= 0) g.rotate(-A.face * Math.min(1.45, A.tt * 3));
+    g.scale(pFlip() ? -1 : 1, 1);
+    g.drawImage(img, f.c * fw, f.r * fh, fw, fh, -fw * s / 2, -fh * s, fw * s, fh * s);
+    g.restore();
+    if($('showbox').checked) drawBoxes(g, a, A.fi, px, A.y, A.face);
+  }
+  if($('showbox').checked && !E.ko){
+    outline(g, eHurt(), '#2fe07a', []);
+    if(E.st === 'windup' || E.st === 'strike') outline(g, eAtkRect(), '#ff4d4d', E.st === 'strike' ? [] : [5, 4]);
+  }
+  parts.forEach(p => fr(g, p.c, p.x | 0, p.y | 0, 4, 4));
+  g.restore();
+  if(winner){
+    g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(0, AH / 2 - 70, AW, 140); g.textAlign = 'center';
+    g.font = '48px "Press Start 2P", ui-monospace, monospace'; g.fillStyle = '#ffd04f'; g.fillText('K.O.', AW / 2, AH / 2 - 5);
+    g.font = '16px "Press Start 2P", ui-monospace, monospace'; g.fillStyle = '#fff';
+    g.fillText(winner === 'p1' ? 'VOCÊ VENCEU · R PARA LUTAR DE NOVO' : 'VOCÊ PERDEU · R PARA TENTAR DE NOVO', AW / 2, AH / 2 + 40);
+  }
+}
+
+function arcLoop(now){
+  if(!arcOn) return;
+  const dt = Math.min(.05, (now - aLast) / 1000); aLast = now;
+  arcUpdate(dt); arcRender(); arcRaf = requestAnimationFrame(arcLoop);
+}
+function toggleMode(){
+  aiMode = aiMode === 'luta' ? 'parado' : 'luta';
+  $('amode').textContent = 'OPONENTE: ' + aiMode.toUpperCase() + ' (T)'; E.st = 'idle'; E.cd = 1;
+}
+function arcOpen(){
+  if(testing) return;
+  if(draft) return say('Há uma ação em ajuste: clique em Armazenar (ou Cancelar) antes de testar o modelo.');
+  if(!cfg){
+    if(!stored().length) return say('Armazene pelo menos uma ação antes de testar o modelo.');
+    rebuild(); refreshUI();
+  }
+  if(document.activeElement) document.activeElement.blur();
+  if(!arcBg) arcBg = buildBg();
+  arcReset(); $('arcade').hidden = false; arcOn = true;
+  cancelAnimationFrame(arcRaf); aLast = performance.now(); arcRaf = requestAnimationFrame(arcLoop);
+}
+function arcClose(){ arcOn = false; cancelAnimationFrame(arcRaf); $('arcade').hidden = true; P.atk = false; P.kick = false; }
+
+// ===== Carregar personagem: lê o .zip salvo por este sistema =====
+async function readZip(buf){
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let e = u8.length - 22; while(e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if(e < 0) throw new Error('não é um arquivo .zip válido');
+  const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true); const out = {};
+  for(let i = 0; i < n; i++){
+    if(dv.getUint32(p, true) !== 0x02014b50) throw new Error('.zip corrompido');
+    const method = dv.getUint16(p + 10, true), csz = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nl));
+    const ds = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true);
+    let data = u8.slice(ds, ds + csz);
+    if(method === 8){ data = new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()); }
+    else if(method !== 0) throw new Error('tipo de compressão do .zip não suportado');
+    out[name] = data; p += 46 + nl + xl + cl;
+  }
+  return out;
+}
+const loadImg = blob => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => no(new Error('imagem do .zip ilegível')); im.src = URL.createObjectURL(blob); });
+async function importZip(f){
+  if(!f) return;
+  try{
+    const files = await readZip(await f.arrayBuffer());
+    const jn = Object.keys(files).find(k => /(^|\/)character\.json$/i.test(k)); if(!jn) throw new Error('character.json não encontrado no .zip');
+    const cj = JSON.parse(new TextDecoder().decode(files[jn]));
+    const base = String(cj.image || 'spritesheet.png').split('/').pop().toLowerCase();
+    const pn = Object.keys(files).find(k => k.split('/').pop().toLowerCase() === base) || Object.keys(files).find(k => /\.png$/i.test(k));
+    if(!pn) throw new Error('spritesheet.png não encontrado no .zip');
+    const im = await loadImg(new Blob([files[pn]], {type: 'image/png'}));
+    const fw = cj.frameWidth, fh = cj.frameHeight; if(!fw || !fh) throw new Error('frameWidth/frameHeight ausentes no character.json');
+    const colsN = cj.columns || Math.max(1, Math.floor(im.width / fw)), nm = pn.split('/').pop();
+    Object.keys(sheets).forEach(k => delete sheets[k]);
+    doc = {scale: cj.scale || 2, facing: cj.facing || 'right', speed: cj.speed || 200, jump: cj.jump || 560, gravity: cj.gravity || 1500, animations: {}};
+    draft = null; pending = null; sel = null; jsonOn = false; $('json').value = ''; $('pimg').hidden = true; clearChar();
+    for(const act of ACTS){
+      const a = cj.animations && cj.animations[act]; if(!a) continue;
+      sheets[act] = [{img: im, name: nm, fw, fh}];
+      const an = {fps: a.fps || DEF_FPS[act], loop: a.loop !== undefined ? a.loop : defLoop(act),
+        segments: [{image: nm, frameWidth: fw, frameHeight: fh, start: (a.row || 0) * colsN + (a.start || 0), count: Math.max(1, a.count || 1), footOffset: 0}]};
+      const hb = a.hurtboxes || (a.hurtbox ? [a.hurtbox] : []);
+      if(hb.length) an.hurtboxes = hb.slice(0, 4).map(b => ({x: b.x, y: b.y, w: b.w, h: b.h}));
+      const ab = a.attackBoxes || (a.attackBox ? [Object.assign({}, a.attackBox, {activeFrames: a.activeFrames})] : []);
+      if(ab.length && isAtkAct(act)) an.attackBoxes = ab.slice(0, 4).map(b => ({x: b.x, y: b.y, w: b.w, h: b.h, activeFrames: b.activeFrames || [0, 0]}));
+      doc.animations[act] = an;
+    }
+    if(!stored().length) throw new Error('nenhuma ação (idle, walk, jump, attack, kick) no character.json');
+    rebuild(); $('manual').checked = false; refreshUI();
+    say(`✓ Personagem carregado de "${f.name}": ${stored().join(', ')}. Teste no preview ou em TESTAR MODELO, ou clique numa ação para editar.`);
+  }catch(e){ say('Não consegui carregar o .zip: ' + (e.message || e)); }
+  $('zipfile').value = '';
+}
+
+// ===== Salvar personagem: .zip com spritesheet.png + character.json =====
+const crcT = (() => { const t = new Uint32Array(256); for(let n = 0; n < 256; n++){ let c = n; for(let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = u8 => { let c = 0xFFFFFFFF; for(let i = 0; i < u8.length; i++) c = crcT[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function makeZip(files){      // sem compressão (PNG já é comprimido)
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+  const u16 = n => [n & 255, (n >> 8) & 255], u32 = n => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  for(const f of files){
+    const nm = enc.encode(f.name), crc = crc32(f.data), sz = f.data.length;
+    const lh = new Uint8Array([0x50, 0x4b, 3, 4, ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(sz), ...u32(sz), ...u16(nm.length), ...u16(0)]);
+    parts.push(lh, nm, f.data);
+    central.push(new Uint8Array([0x50, 0x4b, 1, 2, ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(sz), ...u32(sz), ...u16(nm.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)]), nm);
+    off += lh.length + nm.length + sz;
+  }
+  const csz = central.reduce((n, a) => n + a.length, 0);
+  const end = new Uint8Array([0x50, 0x4b, 5, 6, 0, 0, 0, 0, ...u16(files.length), ...u16(files.length), ...u32(csz), ...u32(off), 0, 0]);
+  return new Blob([...parts, ...central, end], {type: 'application/zip'});
+}
+// JSON do personagem pronto para outro jogo: descreve o spritesheet.png montado (uma linha por ação)
+function exportJson(){
+  const an = {};
+  Object.keys(cfg.animations).forEach(n => {
+    const a = cfg.animations[n];
+    an[n] = {row: a.row, start: 0, count: a.count, fps: a.fps, loop: a.loop};
+    if(a.hurtboxes && a.hurtboxes.length) an[n].hurtboxes = a.hurtboxes;
+    if(a.attackBoxes && a.attackBoxes.length) an[n].attackBoxes = a.attackBoxes;
+  });
+  return {
+    name: 'personagem', image: 'spritesheet.png',
+    frameWidth: cfg.frameWidth, frameHeight: cfg.frameHeight, columns: cols, rows,
+    anchor: {x: .5, y: 1},
+    scale: doc.scale, facing: doc.facing, speed: doc.speed, jump: doc.jump, gravity: doc.gravity,
+    notes: 'Cada animação é uma linha (row) do spritesheet; os frames começam na coluna start. anchor é o ponto dos pés (centro da base do frame). hurtboxes (1 a 4) e attackBoxes (1 a 4, no attack e no kick) ficam em pixels do sprite a partir dos pés: x = 0 é o centro e y negativo é para cima. Cada attackBox tem activeFrames: os frames da animação (0 = primeiro) em que ela causa dano.',
+    animations: an
+  };
+}
+async function saveCharacter(){
+  if(draft) return say('Há uma ação em ajuste: clique em Armazenar (ou Cancelar) antes de salvar.');
+  if(!stored().length) return say('Armazene pelo menos uma ação antes de salvar o personagem.');
+  rebuild(); refreshUI();
+  try{
+    const png = new Uint8Array(await (await new Promise(r => img.toBlob(r, 'image/png'))).arrayBuffer());
+    const json = new TextEncoder().encode(JSON.stringify(exportJson(), null, 2));
+    const zip = makeZip([{name: 'spritesheet.png', data: png}, {name: 'character.json', data: json}]);
+    let dl = null;
+    try{ dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; }catch(e){ dl = null; }
+    if(dl){ await dl.save({filename: 'personagem.zip', data: zip}); say('✓ personagem.zip salvo: spritesheet.png + character.json.'); }
+    else {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(zip); a.download = 'personagem.zip';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      say('personagem.zip gerado (spritesheet.png + character.json).');
+    }
+  }catch(e){
+    say(e && e.code === 'declined' ? 'Download cancelado.' : 'Não consegui salvar: ' + ((e && (e.message || e.code)) || e));
+  }
+}
+
+// eventos
+const typing = e => e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && ['number','text'].includes(e.target.type));
+addEventListener('keydown', e => {
+  if(typing(e)) return;
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code)) e.preventDefault();
+  if(!keys[e.code] && (e.code === 'KeyJ' || e.code === 'KeyZ')) P.atk = true;
+  if(!keys[e.code] && (e.code === 'KeyK' || e.code === 'KeyX')) P.kick = true;
+  if(arcOn && !keys[e.code]){   // na arena, um toque rápido de tecla também conta
+    if(e.code === 'KeyJ' || e.code === 'KeyZ') mPunch = true;
+    if(e.code === 'KeyK' || e.code === 'KeyX') mKick = true;
+  }
+  keys[e.code] = true;
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+document.querySelectorAll('.pad button').forEach(b => {
+  const k = b.dataset.k;
+  b.addEventListener('pointerdown', e => { e.preventDefault(); if(k === 'KeyJ') P.atk = true; if(k === 'KeyK') P.kick = true; keys[k] = true; });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev => b.addEventListener(ev, () => keys[k] = false));
+});
+// soco = clique esquerdo do mouse, chute = clique direito (preview e arena)
+const onCtl = e => e.target.closest && e.target.closest('button, input, label');
+$('game').addEventListener('mousedown', e => { if(e.button === 0) P.atk = true; else if(e.button === 2) P.kick = true; });
+$('arcade').addEventListener('mousedown', e => {
+  if(!arcOn || onCtl(e)) return;
+  if(e.button === 0) mPunch = true; else if(e.button === 2) mKick = true;
+  e.preventDefault();
+});
+['game', 'arcade'].forEach(id => $(id).addEventListener('contextmenu', e => e.preventDefault()));
+$('file').onchange = e => loadFile(e.target.files[0]);
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f && /\.zip$/i.test(f.name)) importZip(f); else loadFile(f); });
+$('gen').onclick = generate;
+$('make').onclick = makePlayable;
+$('arcbtn').onclick = arcOpen;
+$('amode').onclick = toggleMode;
+$('savechar').onclick = saveCharacter;
+$('aclose').onclick = arcClose;
+addEventListener('keydown', e => {
+  if(!arcOn) return;
+  if(e.code === 'Escape') arcClose();
+  if(e.code === 'KeyR') arcReset();
+  if(e.code === 'KeyH') $('showbox').checked = !$('showbox').checked;
+  if(e.code === 'KeyT') toggleMode();
+});
+$('apply').onclick = applyJson;
+$('copy').onclick = async () => {
+  try{ await navigator.clipboard.writeText($('json').value); say('JSON copiado.'); }
+  catch(e){ $('json').select(); say('Selecionei o texto, use Ctrl+C.'); }
+};
+$('manual').onchange = () => { P.anim = null; P.oneshot = false; };
+document.querySelectorAll('#acts button').forEach(b => b.onclick = () => pickAct(b.dataset.a));
+['fw', 'fh'].forEach(id => $(id).addEventListener('change', () => {
+  const fw = Math.max(1, +$('fw').value || 1), fh = Math.max(1, +$('fh').value || 1);
+  if(draft){
+    const x = cs(draft);
+    draft.segs[draft.cur] = mkSeg({img: x.img, name: x.name, fw, fh}, null); draft.pi = 0; stageUI();
+    say('Grade do trecho atualizada: ' + (cs(draft).detected || 0) + ' frame(s) com desenho. Ajuste o slider e clique em Armazenar.');
+  } else if(pending){ pending.fw = fw; pending.fh = fh; }
+}));
+$('fa').oninput = e => {
+  if(!draft) return;
+  const x = cs(draft), b = x.start + x.count; let a = +e.target.value; if(a > b) a = b;
+  x.start = a - 1; x.count = b - a + 1; draft.pi = 0; stageUI();
+};
+$('fb').oninput = e => {
+  if(!draft) return;
+  const x = cs(draft), a = x.start + 1; let b = +e.target.value; if(b < a) b = a;
+  x.count = b - a + 1; draft.pi = 0; stageUI();
+};
+$('store').onclick = storeDraft;
+$('segfile').onchange = e => addSegment(e.target.files[0]);
+$('segdel').onclick = () => { const d = draft; if(!d || d.segs.length < 2) return; d.segs.splice(d.cur, 1); d.cur = Math.max(0, d.cur - 1); d.pi = 0; refreshUI(); say('Trecho removido.'); };
+$('zipfile').onchange = e => importZip(e.target.files[0]);
+document.querySelectorAll('#bmode button').forEach(b => b.onclick = () => { if(draft){ draft.bmode = b.dataset.m; draft.bi = 0; syncBoxUI(draft); } });
+['bx', 'by', 'bw', 'bh'].forEach(id => $(id).addEventListener('change', () => {
+  if(!draft) return;
+  const v = ['bx', 'by', 'bw', 'bh'].map(k => Math.round(+$(k).value || 0));
+  setBox({x: v[0], y: v[1], w: Math.max(1, v[2]), h: Math.max(1, v[3])});
+}));
+['bf0', 'bf1'].forEach(id => $(id).addEventListener('change', () => {
+  const d = draft, bx = d && d.bmode === 'atk' && d.atks[d.bi]; if(!bx) return;
+  const cl = v => Math.max(0, Math.min(d.n - 1, Math.round(+v || 1) - 1));
+  const a = cl($('bf0').value); let b = cl($('bf1').value); if(b < a) b = a;
+  bx.act = [a, b]; d.autoA = false; stageUI();
+}));
+$('bauto').onclick = () => {
+  const d = draft; if(!d) return;
+  if(d.bmode === 'atk') d.autoA = true; else d.autoH = true;
+  d.bi = 0; autoBoxes(d); stageUI();
+};
+$('bclear').onclick = () => {
+  const d = draft; if(!d) return;
+  const atk = d.bmode === 'atk', list = atk ? d.atks : d.hurts;
+  if(list.length) list.splice(d.bi, 1);
+  if(atk) d.autoA = false; else d.autoH = false;
+  d.bi = Math.max(0, d.bi - 1); stageUI();
+};
+// desenhar a caixa arrastando sobre a prévia
+const sprev = $('stgprev'); let dragFrom = null;
+const sprevPt = e => {
+  const d = draft, r = sprev.getBoundingClientRect();
+  const cx = (e.clientX - r.left) * sprev.width / r.width, cy = (e.clientY - r.top) * sprev.height / r.height;
+  return {x: Math.round(cx / d.k - d.W / 2), y: Math.round(cy / d.k - d.feet)};
+};
+sprev.onpointerdown = e => { if(!draft || !draft.k) return; sprev.setPointerCapture(e.pointerId); dragFrom = sprevPt(e); };
+sprev.onpointermove = e => {
+  if(!dragFrom || !draft) return;
+  const q = sprevPt(e);
+  draft.drag = {x: Math.min(dragFrom.x, q.x), y: Math.min(dragFrom.y, q.y), w: Math.abs(q.x - dragFrom.x), h: Math.abs(q.y - dragFrom.y)};
+};
+sprev.onpointerup = () => {
+  if(!dragFrom) return;
+  const b = draft && draft.drag; dragFrom = null;
+  if(draft) draft.drag = null;
+  if(b && b.w >= 2 && b.h >= 2) setBox(b);
+};
+$('cancel').onclick = () => { draft = null; refreshUI(); say('Edição cancelada.'); };
+const setFps = v => {
+  const d = draft || (sel && doc.animations[sel]); if(!d) return;
+  d.fps = v; if(cfg && !draft && cfg.animations[sel]) cfg.animations[sel].fps = v;
+  syncFps(); writeJson();
+};
+$('fps').oninput = e => setFps(+e.target.value);
+$('fps2').oninput = e => setFps(+e.target.value);
+$('scale').oninput = e => { doc.scale = +e.target.value; $('scalev').textContent = e.target.value; if(cfg) cfg.scale = doc.scale; writeJson(); };
+$('flip').onchange = e => { doc.facing = e.target.checked ? 'left' : 'right'; if(cfg) cfg.facing = doc.facing; writeJson(); };
+</script>
+</body>
+</html>
